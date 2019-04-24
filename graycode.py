@@ -59,11 +59,37 @@ def generate_n_bit_gray(n):
         # Reflect the current one
         new_code = np.flip(crt_code, 0)
         # Prefix old code with 0
-        old_code = np.concatenate((np.zeros((len(crt_code),1)), crt_code), axis=1)
+        old_code = np.concatenate((np.zeros((len(crt_code),1), dtype=int), crt_code), axis=1)
         # Prefix new code with 1
-        new_code = np.concatenate((np.ones((len(new_code),1)), new_code), axis=1)
+        new_code = np.concatenate((np.ones((len(new_code),1), dtype=int), new_code), axis=1)
         # Concatenate old with new
         crt_code = np.concatenate((old_code, new_code), axis=0)
         crt_bits += 1
     return crt_code
         
+
+def gray_bit_flip_probability(n):
+    """
+    For each bit position in a Gray code of n bits,
+    determine the probability that the bit will flip.
+    This is for unbalanced codes.
+    """
+    def find_set_bit(array):
+        """Find the index of a set bit in an array, starting from the end"""
+        for i in range(len(array)-1, -1, -1):
+            if array[i] == 1:
+                return len(array)-1-i
+        return -1
+    code = generate_n_bit_gray(n)
+    # Only consider transitions to the adjacent codes,
+    # which have a probability 1/(2*len(code))
+    tr_prob = 1/(2*len(code))
+    bit_tr_prob = [0 for i in range(n)]
+    for idx, sym in enumerate(code):
+        # Transition to previous symbol
+        bit_flipped = find_set_bit(sym^code[idx-1])
+        bit_tr_prob[bit_flipped] += tr_prob
+        # Transition to following symbol
+        bit_flipped = find_set_bit(sym^code[(idx+1)%len(code)])
+        bit_tr_prob[bit_flipped] += tr_prob
+    return bit_tr_prob
